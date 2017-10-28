@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="./d3.min.js"></script>
+</head>
+<body>
+        <!-- 多筆綁定用但沒有調整標籤時 -->
+        <!-- <div></div>
+        <div></div> -->
+
+    <script>
+
+        // let arr = [85, 69, 99, 49, 77, 59];
+        // 一筆一筆綁定
+        // for (let i = 0; i < arr.length; i++){
+        //     body.append("div")
+        //         .datum(arr[i])    // 資料綁定  每個元素都綁到一個div
+        //         // .text("OK")
+        // }
+
+        // 多筆同時綁定，但是不要忘了div
+        //    body.selectAll("div")
+        //         .data(arr)
+
+        let arr = [85, 69, 99, 49, 77, 59];
+
+        bind(arr);
+        render();
+
+        // 把綁定改為function
+        function bind(dataSet){
+            let body = d3.select("body");
+                    // 調整div和data數量差異時
+            let selection = body.selectAll("div")
+                                .data(dataSet);
+            selection.enter().append("div");    // 當視覺化元素(這裡為div)小於資料個數時，利用enter去補
+            selection.exit().remove();   // 當視覺化元素多餘資料個數時，利用.exit.remove
+
+        }
+
+        // 秀值，如果要改變字顏色，在這裡改
+        function render(){
+            d3.selectAll("div")
+              .text(function(d, i){      // 第2個參數會是索引值，此匿名函式是在d3定義好的(資料+索引值)
+                  return (i+1) + ":" + d;
+              }).style({
+                  "color": function(d){
+                      if(d < 70){
+                          return "red";
+                      }else{
+                          return "blue";
+                      }
+                  }
+              })
+        }
+
+        console.log(d3.selectAll("div"));  
+    </script>
+
+
+    
+</body>
+</html>
