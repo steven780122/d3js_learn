@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="./d3.min.js"></script>
+</head>
+<body>
+    <input type="button" value="新增" onclick="update()">   <!-- 新增亂數到Arr -->
+    <input type="button" value="移除" onclick="kickItem()">
+    <script>
+        let arr = [];
+        let w = 900, h = 600, p = 100;
+
+        svg();
+        bind(arr);
+        render();
+
+        function svg(){
+            d3.select("body").append("svg")
+              .attr({
+                "id": "barChart",
+                "width": w,
+                "height": h
+              })
+        }
+
+
+        // 把綁定改為function
+        function bind(dataSet){
+            // 綁定矩形
+            let svg = d3.select("#barChart");
+                    // 調整div和data數量差異時
+            let selection = svg.selectAll("rect")
+                                .data(dataSet);
+            selection.enter().append("rect");    // 當視覺化元素(這裡為div)小於資料個數時，利用enter去補
+            selection.exit().remove();   // 當視覺化元素多餘資料個數時，利用.exit.remove
+
+            // 綁定文字
+            let selectionText = svg.selectAll("text")
+                                .data(dataSet);
+            selectionText.enter().append("text");   
+            selectionText.exit().remove();  
+
+        }
+
+        // 秀值，如果要改變字顏色，在這裡改
+        function render(){
+            // 改圖為10~150的比例尺
+            let yScale = d3.scale.linear()
+                            .domain([100, 1000])      // 想成輸入  
+                            .rangeRound([10, 150]);   // 想成輸出
+                            // 下面再把d換成該比例尺
+
+
+            // 劃出矩形
+            d3.selectAll("#barChart rect")
+              .attr({
+                  "x": function(d, i){
+                    return p + 43 * i
+                  },
+                  "y": function(d){    // 因為要拿到每個資料的data值，所以要寫個匿名函式
+                    return h - p - yScale(d)    // 把原本的d改為yScale(d) 才不會爆掉!
+                  },
+                  width: 40,
+                  height: function(d){
+                    return yScale(d)   // 把原本的d改為yScale(d)
+                  },
+                  fill: function(d){
+                      if(d < 70){
+                          return "red";
+                      }else{
+                          return "lightgreen"
+                      }
+                  }         
+              })
+
+              // 寫文字  
+              d3.selectAll("#barChart text")
+              .attr({
+                  "x": function(d, i){
+                    return p + 43 * i + 20; // 把文字在平移寬的一半
+                  },
+                  "y": function(d){    // 因為要拿到每個資料的data值，所以要寫個匿名函式
+                    return h - p + 20;
+                  },
+                  "text-anchor": "middle"
+              }).text(function(d){
+                  return d;
+              })
+        
+        }
+
+     
+        function update(){
+            let num = random(100, 1000);
+            arr.push(num);    // python是append   // 這裡將Array更新
+            bind(arr);   // 變更後需要重新綁定!
+            render();   // 重新畫
+        }
+
+        function random(min, max){
+            let rScale = d3.scale.linear()
+                            .domain([0, 1])
+                            .rangeRound([min, max]);
+
+
+
+            return rScale(Math.random());
+
+            // return Math.floor(Math.random() * (max - min + 1) + min);   // 這是舊版亂數，改為用比例尺!!
+        }
+
+
+        function kickItem(){
+            arr.shift();    // python是append   // 這裡將Array更新
+            bind(arr);   // 變更後需要重新綁定!
+            render();   // 重新畫
+        }
+
+        // console.log(d3.selectAll("div"));  
+    </script>
+
+
+    
+</body>
+</html>
