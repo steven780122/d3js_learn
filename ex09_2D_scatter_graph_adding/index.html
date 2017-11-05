@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Untitled Document</title>
+    <script src="./d3.min.js"></script>
+    <style>
+        body{
+            background: #eee;
+        }
+
+        .axis path, .axis line{
+            fill: none;
+            stroke: black;
+            shape-rendering: auto;
+        }
+
+        .axis text{
+            font-size: 11px;
+            fill: blue;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 1. 定義width, height, padding, letterList變數
+        var w = 900;
+        var h = 600;
+        var p = 120;    // p is padding
+        
+        
+        //2. 建立svg()畫布環境
+        
+        svg();       
+        
+        //3. 用d3讀取csv
+        d3.csv("./invoice.csv", mid, function(dataSet){  // 第3個參數是匿名函式，dateset就是讀到的資料  // mid是先做一個中間處理
+           
+           bind(dataSet);
+           render(dataSet);
+            
+        });
+        
+        function mid(d){              // 因為csv的number 和 amount是字串，所以要仙預經這個處理來改為數字
+            d.number = +d.number;
+            d.amount = +d.amount;
+
+            return d
+            
+        }
+        
+        function svg(){
+           d3.select("body").append("svg").attr({
+               width: w,
+               height: h
+           });
+            d3.select("svg").append("g").append("rect").attr({
+                width: "100%",
+                height: "100%",
+                fill: "white"
+            });
+        }
+        
+        //4. 建立bind()
+
+        function bind(dataSet){
+            var selection = d3.select("svg")
+                                .selectAll("circle")
+                                .data(dataSet);
+            
+            selection.enter().append("circle");
+            selection.exit().remove();
+        }
+        
+        function render(dataSet){
+            //5. 定義xScale,yScale,rScale, fScale比例尺(range目的在決定在svg上位置)
+
+           var xScale = d3.time.scale()         // 這些scale都把他想成函式!
+                    .domain([                          // 輸入是日期範圍 (用日期比例尺)
+                        new Date("2013-01-01"),
+                        new Date("2016-08-01")
+                    ])           
+                    .range([p, w - p]);            // 輸出記得適用padding~  width-padding(用圖形想!)
+           var yScale = d3.scale.linear()
+                    .domain([
+                        0, d3.max(dataSet, function(d){     // 最大值透過.max
+                            return d.number;       // number是csv的欄位
+                        })
+                    ])
+                    .range([h - p, p]);                     // 輸出最小值是 height - padding, 最大值:padding
+           var rScale = d3.scale.linear()
+                    .domain([
+                        d3.min(dataSet, function(d){     // 最小值透過.min
+                            return d.amount;   
+                        }), d3.max(dataSet, function(d){     // 最大值透過.max
+                            return d.amount;   
+                        })
+                    ])
+                    .range([5, 30]);
+           var fScale = d3.scale.category20();
+
+           var yAxis = d3.svg.axis()
+                        .scale(yScale)
+                        .orient("left")
+                        .ticks(18)   // 刻度在左邊   ticks是改刻度個數
+                        .tickFormat(function(d){
+                            return d / 1000000 + "M"     // 用匿名函式調整呈現刻度單位
+                        })
+
+            
+           var xAxis = d3.svg.axis()
+                        .scale(xScale)
+                        .orient("buttom")
+                        .ticks(18)   // 刻度在左邊   ticks是改刻度個數
+                     
+            //6. 建立render()繪圖
+            d3.selectAll("circle")
+              .attr({
+                cx: function(d){                        // 圓心的位置(用date定位) 因為橫軸是日期
+                    return xScale(new Date(d.date))     // d.date是csv欄位的.date
+                },
+                cy: function(d){                        
+                    return yScale(new Date(d.number))     
+                },
+                r: function(d){                        
+                    return rScale(d.amount)     
+                },
+                fill: function(d){                        
+                    return fScale(d.cid)     
+                }
+                })
+
+            d3.select("svg").append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + (p - 10)  + ", 0)")    // transform 針對g標籤    //原本是(60, 0) 改成動態的p  在減個值
+            .call(yAxis)
+
+            d3.select("svg").append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (h - p + 10 ) + ")")
+            .call(xAxis)
+
+        }
+    </script>
+
+</body>
+</html>
