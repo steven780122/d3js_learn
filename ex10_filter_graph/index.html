@@ -19,9 +19,32 @@
             font-size: 11px;
             fill: blue;
         }
+
+        #tooltip{
+            position: absolute;
+            /* left: 20px; */
+            /* top:  100px; */
+            background: #fff;
+            width: 150px;
+            height: auto;
+            padding: 0px 10px;
+            border-radius: 5px;
+            box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+        }
+
+        /* 在一開始時讓他隱藏，滑鼠移浸在移除hidden */
+        #tooltip.hidden{    
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <div id="tooltip" class="hidden">
+        <p><strong id="city">Hello</strong></p>
+        <p id="industry">tooltip</p>
+    </div>
+
+
     <script>
         // 1. 定義width, height, padding, letterList變數
         var w = 900;
@@ -59,6 +82,18 @@
                 height: "100%",
                 fill: "white"
             });
+
+            // 以下是從render拿上來的
+            d3.select("svg").append("g")    //  因為是append("g")  所以點選button 座標會依ˊ執掌>>   所以要移出去
+            .attr("class", "axis")
+            .attr("id", "axis-y")
+            .attr("transform", "translate(" + (p - 10)  + ", 0)")    // transform 針對g標籤    //原本是(60, 0) 改成動態的p  在減個值
+
+            d3.select("svg").append("g")
+            .attr("class", "axis")
+            .attr("id", "axis-x")
+            .attr("transform", "translate(0," + (h - p + 10 ) + ")")
+
         }
         
         //4. 建立bind()
@@ -128,17 +163,46 @@
                 fill: function(d){                        
                     return fScale(d.cid)     
                 }
-                })
+                }).on("mouseover", function(d){      //撰寫滑鼠移到該circle時的呈現
+                    let xPos = d3.select(this).attr("cx");   // 知道滑鼠現在在哪顆球上!
+                    let yPos = d3.select(this).attr("cy");
+                    
+                    let tooltip = d3.select("#tooltip")
+                                    .style({
+                                    left: (+xPos + 20) +"px",    // 記得+是讓String先轉int
+                                    top: (+yPos + 20)+"px"
+                                    })
+                    
+                    d3.select("#tooltip #city").text(d.city);
+                    d3.select("#tooltip #industry").text(d.industry);
 
-            d3.select("svg").append("g")
-            .attr("class", "axis")
-            .attr("transform", "translate(" + (p - 10)  + ", 0)")    // transform 針對g標籤    //原本是(60, 0) 改成動態的p  在減個值
-            .call(yAxis)
+                    //替換toolti內容(選擇其id後,修改內容)
+                    d3.select("#tooltip").classed("hidden", false);
 
-            d3.select("svg").append("g")
-            .attr("class", "axis")
-            .attr("transform", "translate(0," + (h - p + 10 ) + ")")
-            .call(xAxis)
+
+                }).on("mouseout", function(){
+                    d3.select("#tooltip").classed("hidden", true);
+
+                });
+
+            // d3.select("svg").append("g")    //  因為是append("g")  所以點選button 座標會依ˊ執掌>>   所以要移出去
+            // .attr("class", "axis")
+            // .attr("transform", "translate(" + (p - 10)  + ", 0)")    // transform 針對g標籤    //原本是(60, 0) 改成動態的p  在減個值
+            // .call(yAxis)
+
+            // d3.select("svg").append("g")
+            // .attr("class", "axis")
+            // .attr("transform", "translate(0," + (h - p + 10 ) + ")")
+            // .call(xAxis)
+
+            // 移上去修改後  這裡改為以下 用ID
+
+            d3.select("#axis-y")
+                .call(yAxis)
+   
+            
+            d3.select("#axis-x")
+                .call(xAxis)
 
         }
 
@@ -149,10 +213,53 @@
 
                 let uIndustryArr = unique(industryArray);
 
-                d3.select("body")
-                .append("div")
-                .text(uIndustryArr.join("/"))
+                let fIndustryArray = uIndustryArr.filter(function(d){
+                    return d!="";
+                });
+
+                let selection = d3.select("body")
+                                    .append("select")
+                                    .selectAll("option")
+                                    .data(fIndustryArray);
+
+                selection.enter().append("option");
+                selection.exit().remove();
+
+                d3.selectAll("body option")
+                .attr({
+                    "type": "button",
+                    "value": function(d){
+                        return d;
+                    }
+                    // "onclick": "update()"   //不好傳參數
+                }).text(function(d){
+                    return d;
+                });
+
+                d3.select("select").on("change", function(){
+                    let value = 
+                    d3.select("select").property("value");
+                    update(dataSet, value);
+                })
+
+
+                // d3.selectAll("body>input")
+                //     .on("click", function(d){
+                //         update(dataSet, d)
+                //     })
+                // .text(uIndustryArr.join("/"))
+                // .text(fIndustryArray.join("/"))
             }
+
+        function update(dataSet, industryName){
+            let newDataSet = dataSet.filter(function(d){
+                return d.industry === industryName;
+            })
+
+            bind(newDataSet);
+            render(newDataSet);
+            // 這時候會發現左邊座標軸會越按越多  >> 改render函式
+        }
 
         function unique(array){
             var n = []; 
@@ -169,192 +276,3 @@
 </body>
 </html>
 
-<!-- <!doctype html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Untitled Document</title>
-    <script src="https://d3js.org/d3.v3.js"></script>
-    <style>
-        body{
-            background: #eee;
-        }
-        .axis path, .axis line{
-            fill: none;
-            stroke: black;
-            shape-rendering: auto;
-        }
-        .axis text{
-            font-size: 12px;
-        }
-    </style>
-</head>
-<body>
-    <script>
-        var w = 900;
-        var h = 600;
-        var padding = 90;
-        var letterList = ["A","B","C","D","E","F","G","H","I","J","K","M","N","O","P","Q","T","U","V","W","X","Z"];
-        
-        svg();       
-    
-        d3.csv("invoice.csv", function(dataSet){         
-           bind(dataSet);
-           render(dataSet);
-           btnList(dataSet);
-        });
-        
-        
-        function svg(){
-            d3.select("body").append("svg").attr({
-                width: w,
-                height: h
-            });
-            d3.select("svg").append("g").append("rect").attr({
-                width: "100%",
-                height: "100%",
-                fill: "white"
-            });
-            d3.select("svg").append("g").attr("id","axisX");
-            d3.select("svg").append("g").attr("id","axisY");
-        }
-        
-        function bind(dataSet){
-            var selection = d3.select("svg")
-                                .selectAll("circle")
-                                .data(dataSet);
-            selection.enter().append("circle");
-            selection.exit().remove();
-        }
-        function render(dataSet){
-          //比例尺們 xScale, yScale, rScale, fScale
-           var xScale = d3.time.scale()
-                    .domain([new Date(d3.min(dataSet, function(d){
-                        return new Date(d.date);
-                    })),new Date(d3.max(dataSet, function(d){
-                        return new Date(d.date);
-                    }))])
-                    .range([padding,w-padding]);
-           var yScale = d3.scale.linear()
-                    .domain([0,d3.max(dataSet, function(d){
-                        return +d.number;
-                    })])
-                    .range([h-padding,padding]);
-           var rScale = d3.scale.linear()
-                    .domain([d3.min(dataSet, function(d){
-                        return +d.amount;
-                    }),d3.max(dataSet, function(d){
-                        return +d.amount;
-                    })])
-                    .range([5,20]);
-           var fScale = d3.scale.category20();
-            
-           //開始畫圈圈
-           d3.selectAll("circle")
-              .attr({
-                cx: function(d){
-                  return xScale(new Date(d.date)); 
-                },
-                cy:function(d){
-                  return yScale(+d.number); 
-                },
-                r:function(d){
-                  return rScale(+d.amount); 
-                },
-                fill: function(d){
-                  return fScale(letterList.indexOf(d.cid));
-                }
-              });
-            
-           //開始畫x,y軸線 
-            var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
-            var yAxis = d3.svg.axis().scale(yScale).orient("left");
-            d3.select("svg")
-                .select("g#axisY")
-                .attr("class","axis")
-                .attr("transform", "translate("+(padding-10)+",0)")
-                .call(yAxis);
-            d3.select("svg")
-                .select("g#axisX")
-                .attr("class","axis")
-                .attr("transform", "translate(0,"+(h-padding+10)+")")
-                .call(xAxis);
-            
-            
-        }
-        function btnList(dataSet){
-            
-            //industryArr: 行業別陣列(包含重複項目)           
-            var industryArr = dataSet.map(function(d){
-               return d.industry;
-            });  
-            //uniqueIndustryArr: 行業別陣列(無重複項目) 
-            var uniqueIndustryArr = unique(industryArr);
-            
-            //filterIndustryArr: 行業別陣列(去除空白項目) 
-            var filterIndustryArr = uniqueIndustryArr.filter(function(d){
-               return d!=""; 
-            });
-            
-            //畫出按鈕們
-            var selection = d3.select("body")
-                .append("select")
-                .selectAll("option")
-                .data(filterIndustryArr);
-            
-            
-            selection.enter()
-                .append("option")
-                .attr({
-                    value: function(d){
-                        return d;
-                    }
-                }).text(function(d){
-                        return d;
-                });
-            
-            d3.select("select")
-              .insert("option",":first-child")
-              .attr("value","顯示全部").text("顯示全部");
-            
-            d3.select("select").on("change",function(d){
-                var industryName = d3.select("select").property("value");
-                update(industryName);
-            })
-            
-            
-            
-            function update(industryName){
-                //過濾行業別符合者
-                if(industryName==="顯示全部"){
-                    
-                    bind(dataSet);
-                    render(dataSet);
-                    return;
-                }
-                var newDataSet = dataSet.filter(function(d){
-                    return d.industry === industryName;
-                });
-                
-                //重新整理bind,render
-                bind(newDataSet);
-                render(newDataSet);
-                //???
-            }
-            function unique(array){
-              var n = []; 
-              for(var i = 0; i < array.length; i++){
-                if (n.indexOf(array[i]) == -1){
-                    n.push(array[i]);
-                }
-              }
-              return n;
-            }
-        }
-    </script>
-
-</body>
-</html>
-2d-Scatter-part2.html
-使用「Google 文件」開啟
-目前顯示的是「2d-Scatter-part2.html」。 -->

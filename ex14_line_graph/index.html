@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+</head>
+<body>
+    <script>
+        var w=400, h=400, p=50;
+var lines = [[50,50],[150,200],[250,50],[350,200]];
+
+var svg = d3.select("body").append("svg").attr({
+             width: w,
+             height: h
+          });
+
+
+var linePath = d3.svg.line()
+//                  .interpolate("step")
+//                  .interpolate("basis")
+//                  .interpolate("cardinal")
+//                  .interpolate("monotone")
+//                  .interpolate("bundle")
+                 .x(function(d){return d[0];})
+                 .y(function(d){return d[1];});
+
+
+
+svg.append("path")
+  .attr({
+      d: linePath(lines),
+      fill: "transparent",
+      stroke: "red",
+      "stroke-width": 3
+  });
+
+  
+        
+        
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+</head>
+<body>
+    <script>
+        var w=500, h=400, p=50;
+        var n=100;
+
+        lines=[];
+        original = random(6,25);
+        for(var i=0;i<n;i++){
+        original+=random(-3,4);
+        lines.push([i*5+p,original])    // sample資料 (因為會上上下下)
+        }
+
+        console.log(lines)
+
+        var svg = d3.select("body").append("svg").attr({
+                    width: w,
+                    height: h
+                });
+        var xScale = d3.scale.linear()
+                        .domain([d3.min(lines,function(d){
+                            return d[0];
+                        }),d3.max(lines,function(d){
+                            return d[0];
+                        }) ])
+                        .range([p,w-p]);
+        var yScale = d3.scale.linear()
+                        .domain([d3.min(lines,function(d){
+                            return d[1];
+                        }),d3.max(lines,function(d){
+                            return d[1];
+                        }) ])
+                        .range([h-p,p]);
+        var xAxis = d3.svg.axis()
+                    .scale(xScale).orient("bottom");
+        var yAxis = d3.svg.axis()
+                    .scale(yScale).orient("left");
+
+        d3.select("svg").append("g")
+            .classed("axis",true)
+            .attr("transform","translate(0,"+(h-p)+")").call(xAxis)
+        d3.select("svg").append("g")
+            .classed("axis",true)
+            .attr("transform","translate("+(p)+",0)").call(yAxis)
+
+
+        var linePath = d3.svg.line()
+                .x(function(d){return xScale(d[0]);})
+                .y(function(d){return yScale(d[1]);});
+
+
+
+        svg.append("path")
+        .attr({
+            d: linePath(lines),
+            fill: "transparent",
+            stroke: "navy",
+            "stroke-width": 1
+        });
+
+
+
+        function random(N,M){
+        var rScale = d3.scale.linear()
+                        .domain([0,1])
+                        .range([N,M]);
+        
+        return rScale(Math.random());
+        }
+                
+        
+    </script>
+    
+</body>
+</html>
